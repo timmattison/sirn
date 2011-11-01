@@ -13,6 +13,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 public class SirnHTTPHandler implements HttpHandler {
+	private static final String ERROR_MESSAGE_404 = "File not found";
 	private String path = null;
 
 	public SirnHTTPHandler(String path) {
@@ -28,17 +29,22 @@ public class SirnHTTPHandler implements HttpHandler {
 		File file = new File(path);
 		FileInputStream fileInputStream = new FileInputStream(file);
 
+		byte[] output = null;
+
 		// Was the file found?
 		if (file.length() == 0) {
 			// No, just return a 404
-			httpExchange.sendResponseHeaders(404, 0);
+			httpExchange.sendResponseHeaders(404, ERROR_MESSAGE_404.length());
+			output = ERROR_MESSAGE_404.getBytes();
 		} else {
 			// Yes, return the entire file
 			httpExchange.sendResponseHeaders(200, file.length());
-			OutputStream outputStream = httpExchange.getResponseBody();
-			outputStream.write(streamToByteArray(fileInputStream));
-			outputStream.close();
+			output = streamToByteArray(fileInputStream);
 		}
+
+		OutputStream outputStream = httpExchange.getResponseBody();
+		outputStream.write(output);
+		outputStream.close();
 	}
 
 	private String streamToString(InputStream inputStream) throws IOException {
